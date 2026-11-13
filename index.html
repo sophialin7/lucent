@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PhonemeRestore — Live Spectral Consonant Reconstruction Demo</title>
+  <title>Sibilant — Live Spectral Consonant Reconstruction Demo</title>
   <style>
     :root {
       --bg: #090d16;
@@ -55,7 +55,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: 1.05fr 0.95fr;
       gap: 18px;
       margin-bottom: 18px;
     }
@@ -93,7 +93,8 @@
     button:hover { border-color: var(--accent); }
     button.active { background: var(--accent); color: #090d16; border-color: var(--accent); }
     button.primary { background: var(--green); color: #022c22; border-color: var(--green); font-weight: 700; }
-    button.danger { background: rgba(239, 68, 68, 0.18); color: var(--red); border-color: var(--red); }
+    button.record { background: rgba(245, 158, 11, 0.18); color: var(--amber); border-color: var(--amber); }
+    button.danger { background: rgba(239, 68, 68, 0.22); color: var(--red); border-color: var(--red); }
 
     canvas {
       width: 100%;
@@ -128,7 +129,6 @@
     }
     .s-col .val { font-size: 0.7rem; font-weight: 700; }
 
-    /* Mode Selector */
     .mode-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
     .mode-card {
       text-align: left;
@@ -143,7 +143,7 @@
     }
     .mode-card.selected {
       border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.11);
+      background: rgba(56, 189, 248, 0.12);
     }
     .mode-card strong { display: block; font-size: 0.88rem; }
     .mode-card span { font-size: 0.76rem; color: var(--muted); font-weight: 400; }
@@ -174,71 +174,19 @@
       margin-left: auto;
     }
     input[type="file"] { display: none; }
-    .status { font-size: 0.78rem; color: var(--amber); margin-top: 8px; min-height: 1.2em; }
-
-    /* Quiz Section */
-    .quiz-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .lang-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .lang-toggle button { border: none; border-radius: 0; padding: 5px 10px; font-size: 0.76rem; }
-    .bar { width: 100%; height: 6px; background: #05080f; border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
-    .bar-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.25s ease; }
-
-    .choices {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-    @media (max-width: 600px) { .choices { grid-template-columns: repeat(2, 1fr); } }
-    .choice {
-      padding: 13px 8px;
-      text-align: center;
-      font-size: 1rem;
-      font-weight: 700;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-    .choice small { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
-    .choice.ok { background: rgba(16, 185, 129, 0.25); border-color: var(--green); color: var(--green); }
-    .choice.no { background: rgba(239, 68, 68, 0.25); border-color: var(--red); color: var(--red); }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin: 14px 0;
-    }
-    .stat {
-      background: #05080f;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-    }
-    .stat .big { font-size: 1.45rem; font-weight: 800; }
-    .stat .cap { font-size: 0.76rem; color: var(--muted); }
-    .hidden { display: none; }
+    .status { font-size: 0.8rem; color: var(--amber); margin-top: 8px; min-height: 1.3em; }
   </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>PhonemeRestore <span class="tag">Interactive Prototype</span></h1>
+      <h1>Sibilant <span class="tag">Interactive Audio Demo</span></h1>
       <p class="sub">Audiogram-Conditioned High-Frequency Consonant Reconstruction (/s/, /f/, /th/, /t/, /sh/, /x/, /q/)</p>
     </div>
     <div class="pill-row">
-      <span class="tag" id="cutoffTag">Cutoff: 3000 Hz</span>
-      <span class="tag green" id="engineTag">Engine: WebAudio Causal Proxy</span>
+      <span class="tag" id="cutoffTag">Dead-Zone Cutoff: 3000 Hz</span>
+      <span class="tag green">48dB/oct Cochlear Filter + Spectral Shift</span>
     </div>
   </header>
 
@@ -246,12 +194,12 @@
     <!-- LEFT: Audiogram Configurator -->
     <div class="card">
       <h2>1. 8-Band Audiogram Profile</h2>
-      <p class="hint">Pick a hearing profile or drag bands (dB HL). Frequencies ≥ 60 dB HL define the cochlear dead zone.</p>
+      <p class="hint">Frequencies ≥ 60 dB HL define the cochlear dead zone. Lowering the cutoff increases the contrast between B and C.</p>
 
       <div class="btn-row">
         <button class="active" onclick="setPreset('mildSki', this)">Mild Ski-Slope (3 kHz)</button>
         <button onclick="setPreset('severeHF', this)">Severe High-Freq (2 kHz)</button>
-        <button onclick="setPreset('moderateFlat', this)">Moderate Flat (45 dB)</button>
+        <button onclick="setPreset('profoundHF', this)">Profound High-Freq (1.5 kHz)</button>
         <button onclick="setPreset('normal', this)">Normal Hearing</button>
       </div>
 
@@ -262,103 +210,56 @@
     <!-- RIGHT: Live Audio Engine + Spectrum Visualizer -->
     <div class="card">
       <h2>2. Real-Time A/B/C Listening &amp; Spectrum</h2>
-      <p class="hint">Watch high-frequency consonant bursts (cyan) get remapped below the red dead-zone line.</p>
+      <p class="hint">Record 5 seconds of your voice (say <em>"Pass the six thin fish sticks"</em> or <em>"思、師、西、七"</em>), then switch A / B / C while it loops.</p>
 
       <canvas id="spectrumCanvas" width="440" height="130"></canvas>
 
       <div class="mode-list">
         <button class="mode-card" id="m-orig" onclick="switchMode('orig')">
           <div>
-            <strong>A. Unprocessed Call Audio</strong>
-            <span>Original voice + café background noise</span>
+            <strong>A. Unprocessed Original Voice</strong>
+            <span>Full bandwidth (0 – 8 kHz) with natural /s/, /f/, /th/ consonants</span>
           </div>
           <span class="badge-sm b-orig">Original</span>
         </button>
 
         <button class="mode-card selected" id="m-loss" onclick="switchMode('loss')">
           <div>
-            <strong>B. Simulated High-Frequency Loss</strong>
-            <span>What your audiogram hears without reconstruction</span>
+            <strong>B. Simulated High-Frequency Loss (48dB/oct Roll-off)</strong>
+            <span>Strips high-frequency consonants — sounds muffled ("含滷蛋")</span>
           </div>
           <span class="badge-sm b-loss">Loss Sim</span>
         </button>
 
         <button class="mode-card" id="m-recon" onclick="switchMode('recon')">
           <div>
-            <strong>C. Neural Consonant Reconstruction</strong>
-            <span>Resynthesizes crisp consonants into audible band</span>
+            <strong>C. Spectral Consonant Reconstruction</strong>
+            <span>Downshifts 3.2–8 kHz consonant bursts into audible 1.4–2.6 kHz band</span>
           </div>
           <span class="badge-sm b-recon">AI Active</span>
         </button>
       </div>
 
       <div class="controls-bar">
-        <button class="primary" id="loopBtn" onclick="toggleDemoLoop()">▶ Play Test Loop</button>
-        <button id="micBtn" onclick="toggleLiveMic()">🎙️ Live Mic (Headphones)</button>
+        <button class="record" id="recBtn" onclick="recordFiveSeconds()">🎙️ Record 5s Voice</button>
+        <button class="primary" id="loopBtn" onclick="toggleDemoLoop()">▶ Play Loop</button>
         <label class="upload-link">
-          Load .wav/.mp3
+          Upload .wav/.mp3
           <input type="file" accept="audio/*" onchange="loadCustomFile(event)" />
         </label>
       </div>
-      <div class="status" id="statusText">Ready — click Play Test Loop or enable Live Mic with headphones.</div>
-    </div>
-  </div>
-
-  <!-- BOTTOM: Blind ABX Intelligibility Benchmark -->
-  <div class="card">
-    <div class="quiz-top">
-      <div>
-        <h2>3. Blind Minimal-Pair Intelligibility Test (10 Trials)</h2>
-        <p class="hint" style="margin-bottom:0;">Randomized blind across Unprocessed, Loss-Simulated, and Reconstructed audio.</p>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div class="lang-toggle">
-          <button id="langEnBtn" class="active" onclick="setQuizLang('en')">English (/s, f, th/)</button>
-          <button id="langZhBtn" onclick="setQuizLang('zh')">華語 (s, sh, x, q)</button>
-        </div>
-        <button class="primary" onclick="startQuiz()">Start Blind Test</button>
-      </div>
-    </div>
-
-    <div id="quizPanel" class="hidden">
-      <div class="bar"><div class="bar-fill" id="quizBar"></div></div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong id="trialCounter">Trial 1 / 10</strong>
-        <button onclick="replayTrial()">🔊 Replay Word</button>
-      </div>
-      <div class="choices" id="choicesBox"></div>
-    </div>
-
-    <div id="resultsPanel" class="hidden">
-      <div class="stats">
-        <div class="stat">
-          <div class="big" id="resOrig">—</div>
-          <div class="cap">Unprocessed Baseline</div>
-        </div>
-        <div class="stat">
-          <div class="big" id="resLoss" style="color:var(--red);">—</div>
-          <div class="cap">With Hearing Loss Sim</div>
-        </div>
-        <div class="stat">
-          <div class="big" id="resRecon" style="color:var(--green);">—</div>
-          <div class="cap">With Reconstruction</div>
-        </div>
-      </div>
-      <button onclick="copyReport()">📋 Copy JSON Test Report</button>
+      <div class="status" id="statusText">Tip: Click "🎙️ Record 5s Voice", speak a sentence with /s/ and /f/, then toggle A / B / C!</div>
     </div>
   </div>
 </div>
 
 <script>
-  // ==========================================================
-  // 1. AUDIOGRAM STATE & VISUALIZATION
-  // ==========================================================
   const BANDS = [250, 500, 1000, 2000, 3000, 4000, 6000, 8000];
   const PRESETS = {
-    mildSki:      [15, 15, 20, 35, 60, 75, 85, 90],
-    severeHF:     [20, 25, 40, 65, 80, 90, 95, 100],
-    moderateFlat: [45, 45, 50, 50, 55, 55, 60, 60],
-    normal:       [10, 10, 10, 15, 15, 15, 20, 20]
+    mildSki:    [15, 15, 20, 35, 60, 75, 85, 90],
+    severeHF:   [20, 25, 40, 65, 80, 90, 95, 100],
+    profoundHF: [20, 30, 55, 75, 85, 95, 100, 105],
+    normal:     [10, 10, 10, 15, 15, 15, 20, 20]
   };
 
   let audiogram = [...PRESETS.mildSki];
@@ -408,7 +309,7 @@
         break;
       }
     }
-    document.getElementById('cutoffTag').textContent = `Cutoff: ${cutoffHz} Hz`;
+    document.getElementById('cutoffTag').textContent = `Dead-Zone Cutoff: ${cutoffHz} Hz`;
     drawAudiogram();
     syncDspParams();
   }
@@ -422,9 +323,8 @@
     const pL = 34, pR = 16, pT = 14, pB = 22;
     const gW = w - pL - pR, gH = h - pT - pB;
 
-    // Dead zone shading (>= 60 dB HL)
     const y60 = pT + (60 / 110) * gH;
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.10)';
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
     ctx.fillRect(pL, y60, gW, pT + gH - y60);
 
     ctx.strokeStyle = '#1f2937';
@@ -456,71 +356,59 @@
   }
 
   // ==========================================================
-  // 2. REAL-TIME WEB AUDIO GRAPH + SPECTRUM ANALYSER
+  // REAL-TIME DSP ENGINE (48dB/oct Loss + Spectral Downshift)
   // ==========================================================
   let ctxAudio = null;
   let activeSource = null;
-  let micStream = null;
   let customBuffer = null;
   let mode = 'loss';
-  let sourceKind = 'none'; // 'loop' | 'mic' | 'trial' | 'none'
+  let isPlaying = false;
 
   let gOrig, gLoss, gRecon;
-  let lpLoss1, lpLoss2;
-  let bpRecon, lpRecon;
+  let lossFilters = [];
+  let reconBaseLp, reconTargetBp, reconOutLp, carrierOsc;
   let analyser, animId;
 
   function initAudio() {
     if (!ctxAudio) {
-      ctxAudio = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      // Use native device sample rate (44.1/48 kHz) so uploaded/recorded speech never resamples badly
+      ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (ctxAudio.state === 'suspended') ctxAudio.resume();
   }
 
-  // Synthesizes realistic vowel formants + high-frequency fricatives (/s/, /f/, /th/, /t/, /sh/)
-  function makeSyntheticCallBuffer() {
-    const sr = ctxAudio.sampleRate;
-    const dur = 3.2;
-    const len = Math.floor(sr * dur);
-    const buf = ctxAudio.createBuffer(1, len, sr);
-    const out = buf.getChannelData(0);
+  // 1-Click 5-Second Voice Recorder
+  async function recordFiveSeconds() {
+    try {
+      stopAllAudio();
+      initAudio();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
 
-    const segs = [
-      { t: 0.20, d: 0.14, k: 'fric', f: 6400 }, // /s/
-      { t: 0.35, d: 0.22, k: 'vow',  f: 145  },
-      { t: 0.72, d: 0.13, k: 'fric', f: 5200 }, // /th/
-      { t: 0.86, d: 0.24, k: 'vow',  f: 135  },
-      { t: 1.25, d: 0.14, k: 'fric', f: 4700 }, // /f/
-      { t: 1.40, d: 0.24, k: 'vow',  f: 150  },
-      { t: 1.82, d: 0.07, k: 'fric', f: 4100 }, // /t/
-      { t: 1.90, d: 0.24, k: 'vow',  f: 130  },
-      { t: 2.32, d: 0.15, k: 'fric', f: 3600 }, // /sh/
-      { t: 2.48, d: 0.28, k: 'vow',  f: 125  }
-    ];
+      const recBtn = document.getElementById('recBtn');
+      recBtn.classList.add('danger');
+      recBtn.textContent = '⏺ Recording (5s)...';
+      document.getElementById('statusText').textContent = 'Speak clearly now: "Pass the six thin fish sticks" or "思、師、西、七"...';
 
-    let seed = 4242;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        recBtn.classList.remove('danger');
+        recBtn.textContent = '🎙️ Record 5s Voice';
 
-    for (let i = 0; i < len; i++) {
-      const t = i / sr;
-      let s = (rnd() * 2 - 1) * 0.032; // Café noise floor
-      for (const g of segs) {
-        if (t >= g.t && t <= g.t + g.d) {
-          const env = Math.sin(Math.PI * ((t - g.t) / g.d));
-          if (g.k === 'vow') {
-            s += env * 0.30 * (
-              0.55 * Math.sin(2 * Math.PI * g.f * t) +
-              0.30 * Math.sin(2 * Math.PI * 560 * t) +
-              0.15 * Math.sin(2 * Math.PI * 1650 * t)
-            );
-          } else {
-            s += env * 0.28 * Math.sin(2 * Math.PI * g.f * t + (rnd() * 2 - 1) * 1.8);
-          }
-        }
-      }
-      out[i] = Math.max(-0.95, Math.min(0.95, s));
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+        const arrayBuf = await blob.arrayBuffer();
+        customBuffer = await ctxAudio.decodeAudioData(arrayBuf);
+        document.getElementById('statusText').textContent = 'Recorded! Looping your voice — click A / B / C to hear the difference.';
+        startLoopPlayback();
+      };
+
+      recorder.start();
+      setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, 5000);
+    } catch (err) {
+      document.getElementById('statusText').textContent = 'Microphone access blocked or unavailable.';
     }
-    return buf;
   }
 
   function wireParallelGraph(inputNode) {
@@ -528,361 +416,22 @@
     gLoss = ctxAudio.createGain();
     gRecon = ctxAudio.createGain();
 
-    // Branch A: Original
+    // --- BRANCH A: Unprocessed Full-Bandwidth Voice ---
     inputNode.connect(gOrig);
 
-    // Branch B: Cochlear Dead-Zone Low-Pass
-    lpLoss1 = ctxAudio.createBiquadFilter(); lpLoss1.type = 'lowpass'; lpLoss1.Q.value = 0.85;
-    lpLoss2 = ctxAudio.createBiquadFilter(); lpLoss2.type = 'lowpass'; lpLoss2.Q.value = 0.85;
-    inputNode.connect(lpLoss1);
-    lpLoss1.connect(lpLoss2);
-    lpLoss2.connect(gLoss);
-
-    // Branch C: Spectral Consonant Reconstruction
-    // (Drop-in point for ONNX Runtime Web AudioWorkletNode)
-    const baseLp = ctxAudio.createBiquadFilter();
-    baseLp.type = 'lowpass';
-    baseLp.frequency.value = Math.max(1200, cutoffHz * 0.85);
-
-    const hfHp = ctxAudio.createBiquadFilter();
-    hfHp.type = 'highpass';
-    hfHp.frequency.value = 3400;
-
-    const shaper = ctxAudio.createWaveShaper();
-    const curve = new Float32Array(256);
-    for (let i = 0; i < 256; i++) {
-      const x = (i * 2) / 256 - 1;
-      curve[i] = Math.abs(x) * 1.8 - 0.35;
+    // --- BRANCH B: 48dB/octave Brickwall Cochlear Dead-Zone Filter ---
+    // 4 cascaded lowpass filters make high-frequency consonants vanish unmistakably
+    lossFilters = [];
+    let prev = inputNode;
+    for (let i = 0; i < 4; i++) {
+      const lp = ctxAudio.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.Q.value = 0.75;
+      prev.connect(lp);
+      prev = lp;
+      lossFilters.push(lp);
     }
-    shaper.curve = curve;
+    prev.connect(gLoss);
 
-    bpRecon = ctxAudio.createBiquadFilter(); bpRecon.type = 'bandpass'; bpRecon.Q.value = 1.6;
-    lpRecon = ctxAudio.createBiquadFilter(); lpRecon.type = 'lowpass';
-    const boost = ctxAudio.createGain(); boost.gain.value = 0.58;
-
-    inputNode.connect(baseLp);
-    baseLp.connect(gRecon);
-
-    inputNode.connect(hfHp);
-    hfHp.connect(shaper);
-    shaper.connect(bpRecon);
-    bpRecon.connect(lpRecon);
-    lpRecon.connect(boost);
-    boost.connect(gRecon);
-
-    // Master Sum -> Live FFT Analyser -> Speakers
-    analyser = ctxAudio.createAnalyser();
-    analyser.fftSize = 512;
-    analyser.smoothingTimeConstant = 0.78;
-
-    gOrig.connect(analyser);
-    gLoss.connect(analyser);
-    gRecon.connect(analyser);
-    analyser.connect(ctxAudio.destination);
-
-    syncDspParams();
-    updateCrossfade();
-    startSpectrumLoop();
-  }
-
-  function syncDspParams() {
-    if (!ctxAudio || !lpLoss1) return;
-    const now = ctxAudio.currentTime;
-    const simHz = Math.max(900, cutoffHz * 0.72);
-    lpLoss1.frequency.setTargetAtTime(simHz, now, 0.02);
-    lpLoss2.frequency.setTargetAtTime(simHz, now, 0.02);
-    if (bpRecon) bpRecon.frequency.setTargetAtTime(Math.max(1100, cutoffHz * 0.68), now, 0.02);
-    if (lpRecon) lpRecon.frequency.setTargetAtTime(cutoffHz * 0.92, now, 0.02);
-  }
-
-  function updateCrossfade() {
-    if (!ctxAudio || !gOrig) return;
-    const now = ctxAudio.currentTime;
-    gOrig.gain.setTargetAtTime(mode === 'orig' ? 1 : 0, now, 0.015);
-    gLoss.gain.setTargetAtTime(mode === 'loss' ? 1 : 0, now, 0.015);
-    gRecon.gain.setTargetAtTime(mode === 'recon' ? 1 : 0, now, 0.015);
-  }
-
-  function switchMode(newMode) {
-    mode = newMode;
-    ['orig', 'loss', 'recon'].forEach(m => {
-      document.getElementById(`m-${m}`).classList.toggle('selected', m === newMode);
-    });
-    updateCrossfade();
-  }
-
-  function stopAllAudio() {
-    if (activeSource) {
-      try { activeSource.stop(); } catch (_) {}
-      try { activeSource.disconnect(); } catch (_) {}
-      activeSource = null;
-    }
-    if (micStream) {
-      micStream.getTracks().forEach(t => t.stop());
-      micStream = null;
-    }
-    if (animId) cancelAnimationFrame(animId);
-    sourceKind = 'none';
-    document.getElementById('loopBtn').textContent = '▶ Play Test Loop';
-    document.getElementById('micBtn').textContent = '🎙️ Live Mic (Headphones)';
-    document.getElementById('micBtn').classList.remove('danger');
-  }
-
-  function toggleDemoLoop() {
-    if (sourceKind === 'loop') {
-      stopAllAudio();
-      document.getElementById('statusText').textContent = 'Stopped.';
-      return;
-    }
-    stopAllAudio();
-    initAudio();
-    const buf = customBuffer || makeSyntheticCallBuffer();
-    const src = ctxAudio.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    wireParallelGraph(src);
-    src.start();
-    activeSource = src;
-    sourceKind = 'loop';
-    document.getElementById('loopBtn').textContent = '⏹ Stop Loop';
-    document.getElementById('statusText').textContent = 'Playing — click A / B / C cards above to compare in real time.';
-  }
-
-  async function toggleLiveMic() {
-    if (sourceKind === 'mic') {
-      stopAllAudio();
-      document.getElementById('statusText').textContent = 'Microphone stopped.';
-      return;
-    }
-    try {
-      stopAllAudio();
-      initAudio();
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false }
-      });
-      const micNode = ctxAudio.createMediaStreamSource(micStream);
-      wireParallelGraph(micNode);
-      activeSource = micNode;
-      sourceKind = 'mic';
-      document.getElementById('micBtn').textContent = '⏹ Stop Mic';
-      document.getElementById('micBtn').classList.add('danger');
-      document.getElementById('statusText').textContent = 'Live Mic active — wear headphones to avoid feedback and say /s/, /f/, /th/ words.';
-    } catch (err) {
-      document.getElementById('statusText').textContent = 'Mic permission denied or unavailable.';
-    }
-  }
-
-  async function loadCustomFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    initAudio();
-    const ab = await file.arrayBuffer();
-    customBuffer = await ctxAudio.decodeAudioData(ab);
-    document.getElementById('statusText').textContent = `Loaded: ${file.name}`;
-    if (sourceKind === 'loop') toggleDemoLoop();
-    toggleDemoLoop();
-  }
-
-  function startSpectrumLoop() {
-    const canvas = document.getElementById('spectrumCanvas');
-    const c = canvas.getContext('2d');
-    const bins = new Uint8Array(analyser.frequencyBinCount);
-
-    function frame() {
-      animId = requestAnimationFrame(frame);
-      analyser.getByteFrequencyData(bins);
-      const w = canvas.width, h = canvas.height;
-      c.clearRect(0, 0, w, h);
-
-      // Draw frequency bars (0 to 8000 Hz)
-      const barW = w / bins.length;
-      for (let i = 0; i < bins.length; i++) {
-        const val = bins[i] / 255;
-        const barH = val * (h - 20);
-        const hz = (i / bins.length) * 8000;
-        c.fillStyle = hz >= cutoffHz ? 'rgba(239, 68, 68, 0.7)' : '#38bdf8';
-        c.fillRect(i * barW, h - 16 - barH, Math.max(1, barW - 1), barH);
-      }
-
-      // Draw dead-zone cutoff vertical marker
-      const cutX = (cutoffHz / 8000) * w;
-      c.strokeStyle = '#ef4444';
-      c.setLineDash([4, 4]);
-      c.beginPath(); c.moveTo(cutX, 0); c.lineTo(cutX, h - 16); c.stroke();
-      c.setLineDash([]);
-
-      c.fillStyle = '#9ca3af';
-      c.font = '10px sans-serif';
-      c.fillText('0 Hz', 6, h - 4);
-      c.fillText(`${cutoffHz} Hz Cutoff`, Math.min(w - 85, cutX + 4), 12);
-      c.fillText('8 kHz', w - 34, h - 4);
-    }
-    frame();
-  }
-
-  // ==========================================================
-  // 3. BILINGUAL MINIMAL-PAIR ABX TEST (EN + ZH-TW)
-  // ==========================================================
-  const QUIZ_BANK = {
-    en: [
-      { target: 'Sin',  sub: '/s/',  opts: ['Fin', 'Thin', 'Sin', 'Tin'],      f: 6500 },
-      { target: 'Fin',  sub: '/f/',  opts: ['Fin', 'Thin', 'Sin', 'Pin'],      f: 4800 },
-      { target: 'Thin', sub: '/θ/',  opts: ['Fin', 'Thin', 'Sin', 'Kin'],      f: 5300 },
-      { target: 'Tin',  sub: '/t/',  opts: ['Tin', 'Kin', 'Sin', 'Pin'],       f: 4100 },
-      { target: 'Shin', sub: '/ʃ/',  opts: ['Sin', 'Shin', 'Thin', 'Fin'],     f: 3600 },
-      { target: 'Sick', sub: '/s/',  opts: ['Sick', 'Thick', 'Tick', 'Kick'],  f: 6300 },
-      { target: 'Fast', sub: '/f/',  opts: ['Fast', 'Past', 'Cast', 'Last'],   f: 4900 },
-      { target: 'Seat', sub: '/s/',  opts: ['Seat', 'Feet', 'Sheet', 'Beat'],  f: 6200 },
-      { target: 'Sheep',sub: '/ʃ/',  opts: ['Sheep', 'Seep', 'Cheap', 'Keep'], f: 3700 },
-      { target: 'Thought',sub:'/θ/', opts: ['Thought','Fought','Sought','Taught'],f: 5200 }
-    ],
-    zh: [
-      { target: '思', sub: 'sī',  opts: ['思', '師', '西', '七'], f: 6600 },
-      { target: '西', sub: 'xī',  opts: ['思', '師', '西', '機'], f: 5600 },
-      { target: '師', sub: 'shī', opts: ['思', '師', '西', '吃'], f: 3900 },
-      { target: '七', sub: 'qī',  opts: ['七', '吃', '次', '西'], f: 5200 },
-      { target: '吃', sub: 'chī', opts: ['七', '吃', '次', '師'], f: 3600 },
-      { target: '四', sub: 'sì',  opts: ['四', '是', '細', '氣'], f: 6500 },
-      { target: '細', sub: 'xì',  opts: ['四', '是', '細', '記'], f: 5500 },
-      { target: '氣', sub: 'qì',  opts: ['氣', '次', '赤', '細'], f: 5000 },
-      { target: '次', sub: 'cì',  opts: ['次', '赤', '氣', '四'], f: 6100 },
-      { target: '是', sub: 'shì', opts: ['四', '是', '細', '日'], f: 3800 }
-    ]
-  };
-
-  let quizLang = 'en';
-  let trials = [];
-  let tIdx = 0;
-  let locked = false;
-
-  function setQuizLang(lang) {
-    quizLang = lang;
-    document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
-    document.getElementById('langZhBtn').classList.toggle('active', lang === 'zh');
-  }
-
-  function startQuiz() {
-    stopAllAudio();
-    initAudio();
-    const modes = ['orig', 'loss', 'loss', 'loss', 'recon', 'recon', 'recon', 'orig', 'loss', 'recon'];
-    trials = QUIZ_BANK[quizLang].map((q, i) => ({
-      ...q, mode: modes[i], chosen: null, ok: false
-    })).sort(() => Math.random() - 0.5);
-
-    tIdx = 0;
-    document.getElementById('resultsPanel').classList.add('hidden');
-    document.getElementById('quizPanel').classList.remove('hidden');
-    showTrial();
-  }
-
-  function showTrial() {
-    locked = false;
-    const t = trials[tIdx];
-    document.getElementById('trialCounter').textContent = `Trial ${tIdx + 1} / ${trials.length}`;
-    document.getElementById('quizBar').style.width = `${(tIdx / trials.length) * 100}%`;
-
-    const box = document.getElementById('choicesBox');
-    box.innerHTML = '';
-    t.opts.forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'choice';
-      btn.dataset.val = opt;
-      btn.innerHTML = `<span>${opt}</span>`;
-      btn.onclick = () => pickAnswer(opt, btn);
-      box.appendChild(btn);
-    });
-    replayTrial();
-  }
-
-  function replayTrial() {
-    stopAllAudio();
-    initAudio();
-    const t = trials[tIdx];
-    const prevMode = mode;
-    mode = t.mode;
-
-    const sr = ctxAudio.sampleRate;
-    const len = Math.floor(sr * 0.9);
-    const buf = ctxAudio.createBuffer(1, len, sr);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) {
-      const sec = i / sr;
-      let s = (Math.random() * 2 - 1) * 0.03;
-      if (sec >= 0.14 && sec <= 0.30) {
-        const env = Math.sin(Math.PI * ((sec - 0.14) / 0.16));
-        s += env * 0.33 * Math.sin(2 * Math.PI * t.f * sec + (Math.random() * 2 - 1));
-      } else if (sec > 0.30 && sec <= 0.60) {
-        const env = Math.sin(Math.PI * ((sec - 0.30) / 0.30));
-        s += env * 0.29 * (0.6 * Math.sin(2 * Math.PI * 145 * sec) + 0.4 * Math.sin(2 * Math.PI * 600 * sec));
-      }
-      d[i] = s;
-    }
-
-    const src = ctxAudio.createBufferSource();
-    src.buffer = buf;
-    wireParallelGraph(src);
-    src.start();
-    activeSource = src;
-    sourceKind = 'trial';
-    mode = prevMode;
-  }
-
-  function pickAnswer(val, btn) {
-    if (locked) return;
-    locked = true;
-    const t = trials[tIdx];
-    t.chosen = val;
-    t.ok = (val === t.target);
-
-    document.querySelectorAll('.choice').forEach(b => {
-      if (b.dataset.val === t.target) b.classList.add('ok');
-      else if (b === btn && !t.ok) b.classList.add('no');
-    });
-
-    setTimeout(() => {
-      tIdx++;
-      tIdx < trials.length ? showTrial() : endQuiz();
-    }, 600);
-  }
-
-  function endQuiz() {
-    stopAllAudio();
-    document.getElementById('quizPanel').classList.add('hidden');
-    document.getElementById('resultsPanel').classList.remove('hidden');
-
-    const score = (m) => {
-      const arr = trials.filter(x => x.mode === m);
-      return arr.length ? `${Math.round((arr.filter(x => x.ok).length / arr.length) * 100)}%` : 'N/A';
-    };
-    document.getElementById('resOrig').textContent = score('orig');
-    document.getElementById('resLoss').textContent = score('loss');
-    document.getElementById('resRecon').textContent = score('recon');
-  }
-
-  function copyReport() {
-    const out = {
-      timestamp: new Date().toISOString(),
-      language: quizLang,
-      audiogram: Object.fromEntries(BANDS.map((b, i) => [b, audiogram[i]])),
-      dead_zone_cutoff_hz: cutoffHz,
-      trials: trials.map(({ target, mode, chosen, ok }) => ({ target, mode, chosen, ok }))
-    };
-    navigator.clipboard.writeText(JSON.stringify(out, null, 2));
-    alert('Copied JSON test report to clipboard!');
-  }
-
-  // Optional hook: call loadOnnxCheckpoint('./consonant_recon.onnx') once exported
-  async function loadOnnxCheckpoint(modelUrl) {
-    if (!window.ort) {
-      document.getElementById('statusText').textContent = 'Include onnxruntime-web script tag to load .onnx weights.';
-      return;
-    }
-    const session = await window.ort.InferenceSession.create(modelUrl, { executionProviders: ['webgpu', 'wasm'] });
-    document.getElementById('engineTag').textContent = 'Engine: ONNX Neural Model';
-    return session;
-  }
-
-  buildSliders();
-</script>
-</body>
-</html>
+    // --- BRANCH C: Spectral Consonant Reconstruction (Ring-Mod Downshift + Boost) ---
+    // 1. Keep audible low
